@@ -255,11 +255,13 @@
     var formDefaults = [
         {
             name: 'pid-value',
-            placeholder: 'P###'
+            placeholder: 'P###',
+            class: 'property-autocomplete'
         },
         {
             name: 'edit-summary',
-            placeholder: 'Edit summary'
+            placeholder: 'Edit summary',
+            maxlength: 240
         },
         {
             name: 'submit',
@@ -274,8 +276,9 @@
      * @param appendto CSS selector for object to add on to
      */
     function make_form( data, appendto ) {
+        var buttons = $.extend({}, data, formDefaults );
         var $form = $('<form></form>');
-        $.each( data, function ( index, value ) {
+        $.each( buttons, function ( index, value ) {
             if ( value.id === undefined ) {
                 value.id = value.name;
             }
@@ -296,18 +299,9 @@
     function add_claims() {
         var buttons = [
             {
-                name: 'pid-value',
-                placeholder: 'P###',
-                class: 'property-autocomplete'
-            },
-            {
                 name: 'qid-value',
                 placeholder: 'Value',
                 class: 'item-autocomplete'
-            },
-            {
-                name: 'edit-summary',
-                placeholder: 'Edit summary'
             },
             {
                 name: 'gen-category',
@@ -321,11 +315,6 @@
             {
                 name: 'ignore-list',
                 placeholder: 'Ignore prefix list'
-            },
-            {
-                name: 'submit',
-                _type: 'submit',
-                value: 'Go!'
             },
             {
                 name: 'action-do',
@@ -351,19 +340,6 @@
 
     function remove_claims() {
         var buttons = [
-            {
-                name: 'pid-value',
-                placeholder: 'P###'
-            },
-            {
-                name: 'edit-summary',
-                placeholder: 'Edit summary'
-            },
-            {
-                name: 'submit',
-                _type: 'submit',
-                value: 'Go!'
-            },
             {
                 name: 'action-do',
                 _type: 'hidden',
