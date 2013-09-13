@@ -297,7 +297,8 @@
         var buttons = [
             {
                 name: 'pid-value',
-                placeholder: 'P###'
+                placeholder: 'P###',
+                class: 'property-autocomplete'
             },
             {
                 name: 'qid-value',
@@ -334,12 +335,12 @@
         ];
         make_form( buttons, '#form2' );
         mw.loader.using( 'jquery.ui.autocomplete', function () {
-            $('#qid-value').autocomplete({
+            $('.item-autocomplete').autocomplete({
                 source: function( request, response ) {
                     autocomplete_suggestions( request.term, 'item', response );
                 }
             });
-            $('#pid-value').autocomplete({
+            $('.property-autocomplete').autocomplete({
                 source: function( request, response ) {
                     autocomplete_suggestions( request.term, 'property', response );
                 }
