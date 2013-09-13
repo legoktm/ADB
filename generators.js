@@ -24,9 +24,8 @@ function test() {
             var old = $(id).text();
             thing.text( old + '; ' + text );
         } else {
-            $('#logging').append('<li id=""' + id + '">'+text+'</li>');
+            $('#logging').prepend('<li id=""' + id + '">'+text+'</li>');
         }
-
     }
 
     function get_list_using_property( pid, callback, cont ) {
