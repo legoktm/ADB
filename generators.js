@@ -4,19 +4,39 @@
  */
 
 
-function test() {
-    var api = new mw.Api();
-    api.get({
-        action: 'query',
-        meta: 'userinfo'
-    }, {
-        beforeSend: function () {
-            console.log('YESSSS');
-        }
-    });
-}
-
 (function ($, mw) {
+
+    /**
+     * Provide autocomplete suggestions
+     * @param query string search term
+     * @param type string one of item, property, query
+     * @param callback
+     */
+    function autocomplete_suggestions( query, type, callback ) {
+        var api = new mw.Api();
+        api.get({
+            action: 'wbsearchentities',
+            search: query,
+            language: mw.config.get('wgUserLanguage'),
+            type: type,
+            limit: 10
+        }).done( function( data ) {
+                console.log('done!');
+                var arr = [];
+                $.each( data.search, function( index, value ) {
+                    arr.push({
+                        label: value.label + ' (' + value.description + ')',
+                        value: value.id
+                    });
+                });
+
+                callback( arr );
+            }).fail( function( error) {
+                console.log(error);
+                console.log(':(');
+                callback( [] );
+            });
+    }
 
     function log_event(id, text) {
         var thing = $('#' + id);
@@ -433,30 +453,3 @@ function test() {
 
     make_action_form();
 }(jQuery, mediaWiki));
-
-
-function autocomplete_suggestions( query, type, callback ) {
-    var api = new mw.Api();
-    api.get({
-        action: 'wbsearchentities',
-        search: query,
-        language: mw.config.get('wgUserLanguage'),
-        type: type,
-        limit: 10
-    }).done( function( data ) {
-            console.log('done!');
-            var arr = [];
-            $.each( data.search, function( index, value ) {
-                arr.push({
-                    label: value.label + ' (' + value.description + ')',
-                    value: value.id
-                });
-            });
-
-            callback( arr );
-        }).fail( function( error) {
-            console.log(error);
-            console.log(':(');
-            callback( [] );
-        });
-}
