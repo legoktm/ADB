@@ -6,6 +6,8 @@
 
 (function ($, mw) {
 
+
+    mw.loader.load('jquery.chosen');
     /**
      * Provide autocomplete suggestions
      * @param query string search term
@@ -174,6 +176,70 @@
             });
     }
 
+    function pick_a_generator() {
+        $('#generator').text('Loading...');
+        var allowed = {
+            backlinks: 'backlinks (Special:Whatlinkshere)',
+            categorymembers: 'Members of a category',
+            embeddedin: 'Template usage',
+            imageusage: 'File usage'
+        };
+        // action=paraminfo&querymodules=backlinks|categorymembers&format=jsonfm
+        var mods = '';
+        $.each( allowed, function( key, value ) {
+            mods += key + '|';
+        });
+        var api = new mw.Api();
+        api.get({
+            action: 'paraminfo',
+            querymodules: mods.slice(0, -1)
+        }).done( function ( data ) {
+                //
+                var gen = $('#generator');
+                gen.text('');
+                var $form = $('<form></form>');
+                var $select = $('<select data-placeholder="Select a generator..." class="chosen-select" id="gentype" style="width:350"></select>');
+                $.each( allowed, function( key, value ) {
+                    $select.append('<option value="' + key + '">' + value + '</option>');
+                });
+                $form.append($select);
+                gen.append($form);
+
+                mw.loader.using( 'jquery.chosen', function () {
+                    $('.chosen-select').chosen();
+                });
+
+                $('#gentype').on('change', function () {
+                    $('.gen-form').hide();
+                    $('#' + $(this).val() + '-form').show();
+                });
+
+                $.each( data.paraminfo.querymodules, function( index, value ) {
+                    var arr = [
+                        {
+                            name: 'prefix',
+                            _type: 'hidden',
+                            value: value.prefix
+                        },
+                    ];
+
+                    $.each( value.parameters, function( i, val ) {
+                        if ( val.type === 'string' ) {
+                            arr.push({
+                                name: val.name,
+                                placeholder: val.description,
+                                style: 'width:70%'
+                            });
+                        }
+                    });
+                    make_form( arr, '#generator', 'id="' + value.name + '-form" class="gen-form"' );
+                    $('#' + value.name + '-form').hide();
+                });
+            });
+    }
+
+
+
     function add_claim( pid, dataValue, editSummary, entity ) {
         var api = new mw.Api();
         api.post({
@@ -247,6 +313,7 @@
             $form.append('<input type="radio" name="action" value="remove-claims" />Remove claims<br />');
         }
         $form.append('<input type="radio" name="action" value="add-claims" />Add claims<br />');
+        $form.append('<input type="radio" name="action" value="generator" />Generator<br />')
         $form.append('<input type="radio" name="action" value="sleep" />Sleep<br />');
         $form.append('<input type="submit" value="Continue" />');
         $('#start').append($form);
@@ -272,20 +339,25 @@
 
     /**
      * Help make a html form
-     * @param data see formDefaults above
-     * @param appendto CSS selector for object to add on to
      */
-    function make_form( data, appendto ) {
-        var buttons = $.extend({}, data, formDefaults );
-        var $form = $('<form></form>');
-        $.each( buttons, function ( index, value ) {
+    function make_form( data, appendto, attrs ) {
+        if ( attrs === undefined ) {
+            attrs = '';
+        }
+        var $form = $('<form '+ attrs + '></form>');
+        //$form.attr( data );
+        $.each( data, function ( index, value ) {
             if ( value.id === undefined ) {
                 value.id = value.name;
             }
             if ( value._type === undefined ) {
                 value._type = 'text';
             }
-            var i = '<input ';
+            var i = '';
+            if ( value.help !== undefined ) {
+                i += value.help + ': ';
+            }
+            i =  '<input ';
             $.each( value, function( key, val ) {
                 key = key === '_type' ? 'type' : key;
                 i += key += '="' + val + '" ';
@@ -299,27 +371,47 @@
     function add_claims() {
         var buttons = [
             {
+                name: 'pid-value',
+                placeholder: 'P###',
+                class: 'property-autocomplete',
+                help: 'Property'
+            },
+            {
+                name: 'edit-summary',
+                maxlength: 240,
+                help: 'Edit summary'
+            },
+            {
                 name: 'qid-value',
                 placeholder: 'Value',
-                class: 'item-autocomplete'
+                class: 'item-autocomplete',
+                help: 'Value'
             },
             {
                 name: 'gen-category',
-                placeholder: 'Category:Blah'
+                placeholder: 'Category:Blah',
+                help: 'Category'
             },
             {
                 name: 'gen-site',
                 placeholder: 'en.wikipedia.org',
-                value: 'en.wikipedia.org'  // Mehhhhhhhhhhhhhh
+                value: 'en.wikipedia.org',  // Mehhhhhhhhhhhhhh
+                help: 'Site'
             },
             {
                 name: 'ignore-list',
-                placeholder: 'Ignore prefix list'
+                placeholder: 'Ignore prefix list',
+                help: 'Ignore prefixes'
             },
             {
                 name: 'action-do',
                 _type: 'hidden',
                 value: 'add-claims'
+            },
+            {
+                name: 'submit',
+                _type: 'submit',
+                value: 'Go!'
             }
         ];
         make_form( buttons, '#form2' );
@@ -341,9 +433,24 @@
     function remove_claims() {
         var buttons = [
             {
+                name: 'pid-value',
+                placeholder: 'P###',
+                class: 'property-autocomplete'
+            },
+            {
+                name: 'edit-summary',
+                placeholder: 'Edit summary',
+                maxlength: 240
+            },
+            {
                 name: 'action-do',
                 _type: 'hidden',
                 value: 'remove-claims'
+            },
+            {
+                name: 'submit',
+                _type: 'submit',
+                value: 'Go!'
             }
         ];
         make_form( buttons, '#form2' );
@@ -421,6 +528,9 @@
                 break;
             case 'add-claims':
                 add_claims();
+                break;
+            case 'generator':
+                pick_a_generator();
                 break;
             default:
                 mw.notify('Gooooooodnight!');
