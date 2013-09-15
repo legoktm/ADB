@@ -195,18 +195,32 @@
             action: 'paraminfo',
             querymodules: mods.slice(0, -1)
         }).done( function ( data ) {
-                //
+                console.log('start');
                 var gen = $('#generator');
                 gen.text('');
                 var $form = $('<form></form>');
-                var $select = $('<select data-placeholder="Select a generator..." class="chosen-select" id="gentype" style="width:350"></select>');
-                $.each( allowed, function( key, value ) {
-                    $select.append('<option value="' + key + '">' + value + '</option>');
+                var $select = $('<select></select>');
+                console.log('pre-attr');
+                $select.attr({
+                    'data-placeholder': 'Select a generator...',
+                    class: 'chosen-select',
+                    id: 'gentype',
+                    style: 'width:350'
                 });
+                console.log(allowed);
+                $.each( allowed, function( key, value ) {
+                    console.log([key, value]);
+                    var opt = $('<option></option>');
+                    opt.text(value);
+                    opt.attr('value', key);
+                    $select.append(opt);
+                });
+                console.log('post $.each');
                 $form.append($select);
                 gen.append($form);
 
                 mw.loader.using( 'jquery.chosen', function () {
+                    console.log('using chosen!');
                     $('.chosen-select').chosen();
                 });
 
@@ -219,7 +233,7 @@
                     var arr = [
                         {
                             name: 'prefix',
-                            _type: 'hidden',
+                            type: 'hidden',
                             value: value.prefix
                         },
                     ];
@@ -359,20 +373,16 @@
             if ( value.id === undefined ) {
                 value.id = value.name;
             }
-            if ( value._type === undefined ) {
-                value._type = 'text';
+            if ( value.type === undefined ) {
+                value.type = 'text';
             }
-            var i = '';
             if ( value.help !== undefined ) {
-                i += value.help + ': ';
+                $form.append(value.help + ': ');
             }
-            i =  '<input ';
-            $.each( value, function( key, val ) {
-                key = key === '_type' ? 'type' : key;
-                i += key += '="' + val + '" ';
-            });
-            i += '/><br />';
-            $form.append(i);
+            var input = $('<input />');
+            input.attr(value);
+            $form.append(input);
+            $form.append('<br />')
         });
         $(appendto).append($form);
     }
@@ -414,12 +424,12 @@
             },
             {
                 name: 'action-do',
-                _type: 'hidden',
+                type: 'hidden',
                 value: 'add-claims'
             },
             {
                 name: 'submit',
-                _type: 'submit',
+                type: 'submit',
                 value: 'Go!'
             }
         ];
@@ -453,12 +463,12 @@
             },
             {
                 name: 'action-do',
-                _type: 'hidden',
+                type: 'hidden',
                 value: 'remove-claims'
             },
             {
                 name: 'submit',
-                _type: 'submit',
+                type: 'submit',
                 value: 'Go!'
             }
         ];
