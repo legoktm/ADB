@@ -277,7 +277,7 @@
     function make_link( title, dontencode, text ) {
         var encoded = !dontencode ? encodeURIComponent(title) : title;
         text = text ? text : title;
-        return '<a href="//www.wikidata/wiki/'+encoded+'">' + text + '</a>';
+        return '<a href="//www.wikidata.org/wiki/'+encoded+'">' + text + '</a>';
     }
 
     function remove_claim( pid, editSummary, entitydata ) {
