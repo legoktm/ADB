@@ -252,8 +252,16 @@
             value: dataValue,
             token: mw.user.tokens.get('editToken')
         }).done( function( data ) {
-                log_event(entity, 'Added claim to ' + entity );
+                var revid = data.pageinfo.lastrevid;
+                var difflink = make_link( '?diff=' + revid, true, 'Added' );
+                log_event(entity, difflink + ' claim to ' + make_link(entity) );
             });
+    }
+
+    function make_link( title, dontencode, text ) {
+        var encoded = !dontencode ? encodeURIComponent(title) : title;
+        text = text ? text : title;
+        return '<a href="//www.wikidata/wiki/'+encoded+'">' + text + '</a>';
     }
 
     function remove_claim( pid, editSummary, entitydata ) {
@@ -485,7 +493,7 @@
                         add_claim( pid, dataValue, editSummary, entitydata.id );
                     } else {
                         console.log('skipping.....');
-                        log_event( entitydata.id, 'Skipped adding claim on ' + entitydata.id );
+                        log_event( entitydata.id, 'Skipped adding claim on ' + make_link(entitydata.id) );
                     }
 
                 });
