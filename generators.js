@@ -537,7 +537,6 @@
 
 
     $('#start').submit( function (e) {
-        mw.notify('onsubmit');
         e.preventDefault();
         var val = $("#action-form input[type='radio']:checked").val();
         $('#action-form').hide(); // Done with that one.
