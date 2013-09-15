@@ -477,6 +477,7 @@
                 } else {
                     input = $('<select></select>');
                 }
+                input.append($('<option></option>')); // Add a null one
                 if ($.isArray(value.options)) {
                     $.each(value.options, function( index, val ) {
                         input.append($('<option></option>').text(val));
