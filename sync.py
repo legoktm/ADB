@@ -7,4 +7,5 @@ with open('generators.js') as f:
 site = pywikibot.Site('wikidata', 'wikidata')
 pg = pywikibot.Page(site, 'User:Legoktm/ADB.js')
 pg.put(text, 'upd')
-
+import sh
+sh.git.push()
