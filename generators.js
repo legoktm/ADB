@@ -257,21 +257,19 @@
                         if ( val.name === 'continue' || val.name === 'prop' ) {
                             return;
                         }
+                        var thingy = {
+                            name: val.name,
+                            placeholder: val.description,
+                            class: value.name + '-form gen-form'
+                        };
                         if ( val.type === 'string' ) {
-                            arr.push({
-                                name: val.name,
-                                placeholder: val.description,
-                                style: 'width:70%'
-                            });
+                            thingy.style = 'width:70%';
                         } else if ( $.isArray(val.type) ) {
-                            arr.push({
-                                'data-placeholder': 'Select an option',
-                                name: val.name,
-                                help: val.description,
-                                options: [''].concat(val.type),
-                                htmltype: 'select',
-                                'class': 'chosen-select'
-                            });
+                            thingy['data-placeholder'] = 'Select an option';
+                            thingy.help = val.description;
+                            thingy.options = val.type;
+                            thingy.htmltype = 'select';
+                            thingy['class'] += ' chosen-select';
                         } else if ( val.type === 'namespace' ) {
                             var ns = {};
                             $.each(mw.config.namespaces['en.wikipedia.org'], function( nsid, nsinfo ) {
@@ -280,18 +278,17 @@
                                 }
                                 ns[nsid] = nsinfo['*'];
                             });
-                            arr.push({
-                                'data-placeholder': 'Select a namespace',
-                                name: val.name,
-                                help: val.description,
-                                htmltype: 'select',
-                                multiple: true,
-                                'class': 'chosen-select',
-                                options: ns,
-                                style: 'width: 350px'
-                            });
-
+                            thingy['data-placeholder'] = 'Select a namespace';
+                            thingy.help = val.description;
+                            thingy.htmltype = 'select';
+                            thingy.multiple = true;
+                            thingy['class'] += ' chosen-select';
+                            thingy.options = ns;
+                            thingy.style = 'width: 350px';
+                        } else {
+                            return;
                         }
+                        arr.push(thingy);
                     });
                     make_form( arr, '#generator', 'id="' + value.name + '-form" class="gen-form"' );
                     $('#' + value.name + '-form').hide();
