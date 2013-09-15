@@ -6,6 +6,8 @@
 
 (function ($, mw) {
 
+    mw.util.addCSS( '.gen-form { display: block; }' );
+
 
     mw.loader.load(['jquery.chosen', 'jquery.ui.autocomplete']);
     mw.config.namespaces = {};
@@ -32,7 +34,6 @@
                         value: value.id
                     });
                 });
-
                 callback( arr );
             }).fail( function( error) {
                 console.log(error);
@@ -199,18 +200,22 @@
         });
     }
 
-    function pick_a_generator() {
-        $('#generator').text('Loading...');
-        var allowed = {
-            backlinks: 'backlinks (Special:Whatlinkshere)',
-            categorymembers: 'Members of a category',
-            embeddedin: 'Template usage',
-            imageusage: 'File usage',
-            exturlusage: 'External link usage'
-        };
-        // action=paraminfo&querymodules=backlinks|categorymembers&format=jsonfm
+    var allowed_generators = {
+        backlinks: 'backlinks (Special:Whatlinkshere)',
+        categorymembers: 'Members of a category',
+        embeddedin: 'Template usage',
+        imageusage: 'File usage',
+        exturlusage: 'External link usage'
+    };
+
+
+    function preload_generator() {
+        // Store some stuff in mw.config!
+        if ( mw.config.generators !== undefined ) {
+            return;
+        }
         var mods = '';
-        $.each( allowed, function( key, value ) {
+        $.each( allowed_generators, function( key, value ) {
             mods += key + '|';
         });
         get_namespaces('en.wikipedia.org'); // Will be done in the background
@@ -218,88 +223,93 @@
         api.get({
             action: 'paraminfo',
             querymodules: mods.slice(0, -1)
-        }).done( function ( data ) {
-                console.log('start');
-                var gen = $('#generator');
-                gen.text('');
-                var formthingies = [
-                    {
-                        'data-placeholder': 'Select a generator...',
-                        'class': 'chosen-select',
-                        id: 'gentype',
-                        style: 'width:350',
-                        htmltype: 'select',
-                        options: allowed
-                    }
-                ];
-                make_form( formthingies, '#generator', '' );
-
-                mw.loader.using( 'jquery.chosen', function () {
-                    console.log('using chosen!');
-                    $('.chosen-select').chosen();
-                });
-
-                $('#gentype').on('change', function () {
-                    $('.gen-form').hide();
-                    $('#' + $(this).val() + '-form').show();
-                    mw.loader.using( 'jquery.chosen', function () {
-                        $('.chosen-select').chosen();
-                    });
-                });
-
-                $.each( data.paraminfo.querymodules, function( index, value ) {
-                    var arr = [
-                        {
-                            name: 'prefix',
-                            type: 'hidden',
-                            value: value.prefix
-                        },
-                    ];
-
-                    $.each( value.parameters, function( i, val ) {
-                        if ( val.name === 'continue' || val.name === 'prop' ) {
-                            return;
-                        }
-                        var thingy = {
-                            name: val.name,
-                            placeholder: val.description,
-                            class: value.name + '-form gen-form'
-                        };
-                        if ( val.type === 'string' ) {
-                            thingy.style = 'width:70%';
-                        } else if ( $.isArray(val.type) ) {
-                            thingy['data-placeholder'] = 'Select an option';
-                            thingy.help = val.description;
-                            thingy.options = val.type;
-                            thingy.htmltype = 'select';
-                            thingy['class'] += ' chosen-select';
-                        } else if ( val.type === 'namespace' ) {
-                            var ns = {};
-                            $.each(mw.config.namespaces['en.wikipedia.org'], function( nsid, nsinfo ) {
-                                if ( nsinfo['*'] === '' ) {
-                                    nsinfo['*'] = 'Mainspace';
-                                }
-                                ns[nsid] = nsinfo['*'];
-                            });
-                            thingy['data-placeholder'] = 'Select a namespace';
-                            thingy.help = val.description;
-                            thingy.htmltype = 'select';
-                            thingy.multiple = true;
-                            thingy['class'] += ' chosen-select';
-                            thingy.options = ns;
-                            thingy.style = 'width: 350px';
-                        } else {
-                            return;
-                        }
-                        arr.push(thingy);
-                    });
-                    make_form( arr, '#generator', 'id="' + value.name + '-form" class="gen-form"' );
-                    $('#' + value.name + '-form').hide();
-                    mw.loader.using( 'jquery.chosen', function () {
-                        $('.chosen-select').chosen();
-                    });
-                });
+        }).done( function( data ) {
+                mw.config.generators = data;
             });
+        }
+
+    function pick_a_generator() {
+    // action=paraminfo&querymodules=backlinks|categorymembers&format=jsonfm
+        console.log('start');
+        var gen = $('#generator');
+        gen.text('');
+        var formthingies = [
+            {
+                'data-placeholder': 'Select a generator...',
+                'class': 'chosen-select',
+                id: 'gentype',
+                style: 'width:350',
+                htmltype: 'select',
+                options: allowed_generators
+            }
+        ];
+        $('#generator').append(make_form( formthingies ));
+
+        mw.loader.using( 'jquery.chosen', function () {
+            console.log('using chosen!');
+            $('.chosen-select').chosen();
+        });
+
+        $('#gentype').on('change', function () {
+            $('.gen-form').hide();
+            $('#' + $(this).val() + '-form').show();
+            mw.loader.using( 'jquery.chosen', function () {
+                $('.chosen-select').chosen();
+            });
+        });
+
+        $.each( mw.config.generators.paraminfo.querymodules, function( index, value ) {
+            var arr = [
+                {
+                    name: 'prefix',
+                    type: 'hidden',
+                    value: value.prefix
+                },
+            ];
+
+            $.each( value.parameters, function( i, val ) {
+                if ( val.name === 'continue' || val.name === 'prop' ) {
+                    return;
+                }
+                var thingy = {
+                    name: val.name,
+                    placeholder: val.description,
+                    class: value.name + '-form gen-form'
+                };
+                if ( val.type === 'string' ) {
+                    thingy.style = 'width:70%';
+                } else if ( $.isArray(val.type) ) {
+                    thingy['data-placeholder'] = 'Select an option';
+                    thingy.help = val.description;
+                    thingy.options = val.type;
+                    thingy.htmltype = 'select';
+                    thingy['class'] += ' chosen-select';
+                } else if ( val.type === 'namespace' ) {
+                    var ns = {};
+                    $.each(mw.config.namespaces['en.wikipedia.org'], function( nsid, nsinfo ) {
+                        if ( nsinfo['*'] === '' ) {
+                            nsinfo['*'] = 'Mainspace';
+                        }
+                        ns[nsid] = nsinfo['*'];
+                    });
+                    thingy['data-placeholder'] = 'Select a namespace';
+                    thingy.help = val.description;
+                    thingy.htmltype = 'select';
+                    thingy.multiple = true;
+                    thingy['class'] += ' chosen-select';
+                    thingy.options = ns;
+                    thingy.style = 'width: 350px';
+                } else {
+                    return;
+                }
+                arr.push(thingy);
+            });
+            $('#generator').append(make_form( arr, 'id="' + value.name + '-form" class="gen-form"' ));
+            $('#' + value.name + '-form').hide();
+            mw.loader.using( 'jquery.chosen', function () {
+                $('.chosen-select').chosen();
+            });
+        });
     }
 
 
@@ -404,7 +414,7 @@
                 style: 'width:350'
             }
         ];
-        make_form(thingies, '#start', 'id="action-form"');
+        $('#start').append(make_form(thingies, 'id="action-form"'));
 
 
         // dunno why this doesnt work
@@ -449,7 +459,7 @@
     /**
      * Help make a html form
      */
-    function make_form( data, appendto, attrs ) {
+    function make_form( data, attrs ) {
         if ( attrs === undefined ) {
             attrs = '';
         }
@@ -500,7 +510,6 @@
             $form.append(input);
             $form.append('<br />')
         });
-        $(appendto).append($form);
     }
 
     function add_claims() {
@@ -549,7 +558,7 @@
                 value: 'Go!'
             }
         ];
-        make_form( buttons, '#form2' );
+        $('#form2').append(make_form( buttons ));
         mw.loader.using( 'jquery.ui.autocomplete', function () {
             $('.item-autocomplete').autocomplete({
                 source: function( request, response ) {
@@ -588,7 +597,7 @@
                 value: 'Go!'
             }
         ];
-        make_form( buttons, '#form2' );
+        $('#form2').append(make_form( buttons ));
     }
 
     function do_remove_claims() {
@@ -671,5 +680,10 @@
         return false;
     });
 
-    make_action_form();
+    function init() {
+        make_action_form();
+        preload_generator();
+    }
+
+    init();
 }(jQuery, mediaWiki));
