@@ -225,7 +225,7 @@
                     ];
 
                     $.each( value.parameters, function( i, val ) {
-                        if ( val.type === 'string' ) {
+                        if ( val.type === 'string' && val.name !== 'continue' ) {
                             arr.push({
                                 name: val.name,
                                 placeholder: val.description,
