@@ -208,6 +208,7 @@
                     style: 'width:350'
                 });
                 console.log(allowed);
+                $select.append($('<option></option>').text(''));
                 $.each( allowed, function( key, value ) {
                     console.log([key, value]);
                     var opt = $('<option></option>');
