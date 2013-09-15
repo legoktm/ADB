@@ -257,6 +257,7 @@
 
     function add_claim( pid, dataValue, editSummary, entity ) {
         var api = new mw.Api();
+        console.log(editSummary);
         api.post({
             action: 'wbcreateclaim',
             entity: entity,
@@ -477,8 +478,7 @@
 
     function do_remove_claims() {
         var pid = $('#pid-value').val().toUpperCase();
-        var editSummary = $('#edit-summary').val();
-        editSummary += ') ([[User:Legoktm/ADB|ADB]]';
+        var editSummary = $('#edit-summary').val() + ') ([[User:Legoktm/ADB|ADB]]';
         var remove_claim_cb = function ( entitydata ) {
             remove_claim( pid, editSummary, entitydata );
         };
