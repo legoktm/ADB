@@ -46,8 +46,11 @@
         if ( thing.length > 0 ) {
             var old = $(id).text();
             thing.text( old + '; ' + text );
+            // Bump back to the top
+            thing.remove();
+            $('#logging').prepend(thing);
         } else {
-            $('#logging').prepend('<li id=""' + id + '">'+text+'</li>');
+            $('#logging').prepend('<li id="' + id + '">'+text+'</li>');
         }
     }
 
