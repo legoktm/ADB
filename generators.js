@@ -476,7 +476,7 @@
                 // http://stackoverflow.com/questions/5631384/remove-everything-after-a-certain-character
                 var n = value.help.indexOf('NOTE');
                 value.help = value.help.substring(0, n != -1 ? n : value.help.length);
-                $form.append(value.help + ': ');
+                $form.append(value.help);
                 delete value.help;
             }
 
