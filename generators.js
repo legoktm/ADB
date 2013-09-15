@@ -390,6 +390,42 @@
         callback( dataValue );
     }
 
+    function make_action_form2( ) {
+        var options = {
+            'add-claims': 'Add claims',
+            'generator': 'Generator',
+            'sleep': 'Sleep'
+        };
+        if ( inGroup( 'sysop' ) ) {
+            options['remove-claims'] = 'Remove claims';
+        }
+        var thingies = [
+            {
+                name: 'gogogo',
+                type: 'submit',
+                value: 'Start!'
+            },
+            {
+                name: 'action',
+                htmltype: 'select',
+                'data-placeholder': 'Select an action',
+                'class': 'chosen-select',
+                options: options,
+                style: 'width:350'
+            }
+        ];
+        make_form(thingies, '#start', 'id="action-form"');
+
+
+        // dunno why this doesnt work
+        /*
+        mw.loader.using('jquery.chosen', function() {
+            $('.chosen-select').chosen();
+        });
+        */
+
+    }
+
     function make_action_form( ) {
         var $form = $('<form id="action-form"></form>');
         if ( inGroup( 'sysop' ) ) {
