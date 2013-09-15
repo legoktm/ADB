@@ -219,27 +219,17 @@
                 console.log('start');
                 var gen = $('#generator');
                 gen.text('');
-                var $form = $('<form></form>');
-                var $select = $('<select></select>');
-                console.log('pre-attr');
-                $select.attr({
-                    'data-placeholder': 'Select a generator...',
-                    class: 'chosen-select',
-                    id: 'gentype',
-                    style: 'width:350'
-                });
-                console.log(allowed);
-                $select.append($('<option></option>').text(''));
-                $.each( allowed, function( key, value ) {
-                    console.log([key, value]);
-                    var opt = $('<option></option>');
-                    opt.text(value);
-                    opt.attr('value', key);
-                    $select.append(opt);
-                });
-                console.log('post $.each');
-                $form.append($select);
-                gen.append($form);
+                var formthingies = [
+                    {
+                        'data-placeholder': 'Select a generator...',
+                        'class': 'chosen-select',
+                        id: 'gentype',
+                        style: 'width:350',
+                        htmltype: 'select',
+                        options: allowed
+                    }
+                ];
+                make_form( formthingies, '#generator', '' );
 
                 mw.loader.using( 'jquery.chosen', function () {
                     console.log('using chosen!');
