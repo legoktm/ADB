@@ -7,7 +7,7 @@
 (function ($, mw) {
 
 
-    mw.loader.load('jquery.chosen');
+    mw.loader.load(['jquery.chosen', 'jquery.ui.autocomplete']);
     /**
      * Provide autocomplete suggestions
      * @param query string search term
