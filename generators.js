@@ -8,6 +8,7 @@
 
 
     mw.loader.load(['jquery.chosen', 'jquery.ui.autocomplete']);
+    mw.config.namespaces = {};
     /**
      * Provide autocomplete suggestions
      * @param query string search term
@@ -177,19 +178,39 @@
             });
     }
 
+    function get_namespaces( site ) {
+        // We store stuff in the mw.config global
+        if ( mw.config.namespaces[site] !== undefined ) {
+            return;
+        }
+        // action=query&meta=siteinfo&siprop=namespaces&format=jsonfm
+        var params = {
+            action: 'query',
+            meta: 'siteinfo',
+            siprop: 'namespaces',
+            format: 'json'
+        };
+        $.getJSON( location.protocol + '//' + site + '/w/api.php?' + $.param(params) + '&callback=?',
+            function (data) {
+                mw.config.namespaces[site] = data.query.namespaces;
+        });
+    }
+
     function pick_a_generator() {
         $('#generator').text('Loading...');
         var allowed = {
             backlinks: 'backlinks (Special:Whatlinkshere)',
             categorymembers: 'Members of a category',
             embeddedin: 'Template usage',
-            imageusage: 'File usage'
+            imageusage: 'File usage',
+            exturlusage: 'External link usage'
         };
         // action=paraminfo&querymodules=backlinks|categorymembers&format=jsonfm
         var mods = '';
         $.each( allowed, function( key, value ) {
             mods += key + '|';
         });
+        get_namespaces('en.wikipedia.org'); // Will be done in the background
         var api = new mw.Api();
         api.get({
             action: 'paraminfo',
@@ -228,6 +249,9 @@
                 $('#gentype').on('change', function () {
                     $('.gen-form').hide();
                     $('#' + $(this).val() + '-form').show();
+                    mw.loader.using( 'jquery.chosen', function () {
+                        $('.chosen-select').chosen();
+                    });
                 });
 
                 $.each( data.paraminfo.querymodules, function( index, value ) {
@@ -240,16 +264,50 @@
                     ];
 
                     $.each( value.parameters, function( i, val ) {
-                        if ( val.type === 'string' && val.name !== 'continue' ) {
+                        if ( val.name === 'continue' || val.name === 'prop' ) {
+                            return;
+                        }
+                        if ( val.type === 'string' ) {
                             arr.push({
                                 name: val.name,
                                 placeholder: val.description,
                                 style: 'width:70%'
                             });
+                        } else if ( $.isArray(val.type) ) {
+                            arr.push({
+                                'data-placeholder': 'Select an option',
+                                name: val.name,
+                                help: val.description,
+                                options: [''].concat(val.type),
+                                htmltype: 'select',
+                                'class': 'chosen-select'
+                            });
+                        } else if ( val.type === 'namespace' ) {
+                            var ns = {};
+                            $.each(mw.config.namespaces['en.wikipedia.org'], function( nsid, nsinfo ) {
+                                if ( nsinfo['*'] === '' ) {
+                                    nsinfo['*'] = 'Mainspace';
+                                }
+                                ns[nsid] = nsinfo['*'];
+                            });
+                            arr.push({
+                                'data-placeholder': 'Select a namespace',
+                                name: val.name,
+                                help: val.description,
+                                htmltype: 'select',
+                                multiple: true,
+                                'class': 'chosen-select',
+                                options: ns,
+                                style: 'width: 350px'
+                            });
+
                         }
                     });
                     make_form( arr, '#generator', 'id="' + value.name + '-form" class="gen-form"' );
                     $('#' + value.name + '-form').hide();
+                    mw.loader.using( 'jquery.chosen', function () {
+                        $('.chosen-select').chosen();
+                    });
                 });
             });
     }
@@ -379,10 +437,39 @@
                 value.type = 'text';
             }
             if ( value.help !== undefined ) {
+                // http://stackoverflow.com/questions/5631384/remove-everything-after-a-certain-character
+                var n = value.help.indexOf('NOTE');
+                value.help = value.help.substring(0, n != -1 ? n : value.help.length);
                 $form.append(value.help + ': ');
+                delete value.help;
             }
-            var input = $('<input />');
-            input.attr(value);
+
+            var htmltype = value.htmltype;
+            delete value.htmltype;
+            var input;
+            if ( htmltype === 'select' ) {
+                if ( value.multiple !== undefined ) {
+                    input = $('<select multiple></select>');
+                    delete value.multiple;
+                } else {
+                    input = $('<select></select>');
+                }
+                if ($.isArray(value.options)) {
+                    $.each(value.options, function( index, val ) {
+                        input.append($('<option></option>').text(val));
+                    });
+
+                } else {
+                    $.each( value.options, function( key, val ) {
+                        input.append($('<option></option>').text(val).attr('value', key) );
+                    } );
+                }
+                delete value.options;
+                input.attr(value);
+            } else {
+                input = $('<input />');
+                input.attr(value);
+            }
             $form.append(input);
             $form.append('<br />')
         });
