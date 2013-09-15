@@ -141,6 +141,7 @@
             generator: 'categorymembers',
             gcmtitle: catname,
             gcmlimit: 50,
+            gcmnamespace: 0,
             prop: 'pageprops',
             format: 'json'
         };
