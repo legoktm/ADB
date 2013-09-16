@@ -341,7 +341,7 @@
                     thingy['class'] += ' chosen-select';
                 } else if ( val.type === 'namespace' ) {
                     var ns = {};
-                    $.each(mw.config.namespaces['en.wikipedia.org'], function( nsid, nsinfo ) {
+                    $.each(mw.config.namespaces[mw.config.ADB['default-site']], function( nsid, nsinfo ) {
                         if ( nsinfo['*'] === '' ) {
                             nsinfo['*'] = 'Mainspace';
                         }
