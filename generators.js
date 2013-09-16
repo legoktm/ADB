@@ -294,7 +294,7 @@
                 options: allowed_generators
             }
         ];
-        $('#generator').append(make_form( formthingies ));
+        gen.append(make_form( formthingies ));
 
         mw.loader.using( 'jquery.chosen', function () {
             console.log('using chosen!');
