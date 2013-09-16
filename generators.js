@@ -42,6 +42,21 @@
             });
     }
 
+
+
+    function remote_autocomplete( query, callback ) {
+        var params = {
+            action: 'opensearch',
+            search: query,
+            suggest: ''
+        };
+        $.getJSON( location.protocol + '//' + mw.config.ADB['default-site'] + '/w/api.php?' + $.param(params) + '&callback=?',
+            function ( data ) {
+                callback( data[1] );
+            }
+        );
+    }
+
     function log_event(id, text) {
         var thing = $('#' + id);
         if ( thing.length > 0 ) {
@@ -388,6 +403,9 @@
                     placeholder: val.description,
                     //class: value.name + '-form gen-form'
                 };
+                if ( val.name === 'title' ) {
+                    thingy['class'] += ' remote-autocomplete';
+                }
                 if ( val.type === 'string' ) {
                     thingy.style = 'width:70%';
                 } else if ( $.isArray(val.type) ) {
@@ -423,6 +441,13 @@
             $('#' + value.name + '-form').hide();
             mw.loader.using( 'jquery.chosen', function () {
                 $('.chosen-select').chosen();
+            });
+            mw.loader.using('jquery.ui.autocomplete', function() {
+                $('.remote-autocomplete').autocomplete({
+                    source: function( request, response ) {
+                        remote_autocomplete( request.term, response );
+                    }
+                });
             });
         });
     }
