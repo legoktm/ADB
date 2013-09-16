@@ -519,9 +519,9 @@
      */
     function make_form( data, attrs ) {
         if ( attrs === undefined ) {
-            attrs = '';
+            attrs = {};
         }
-        var $form = $('<form '+ attrs + '></form>');
+        var $form = $('<form></form>').attr(attrs);
         //$form.attr( data );
         $.each( data, function ( index, value ) {
             if ( value.id === undefined ) {
@@ -568,6 +568,8 @@
             $form.append(input);
             $form.append('<br />')
         });
+
+        return $form;
     }
 
     function add_claims() {
