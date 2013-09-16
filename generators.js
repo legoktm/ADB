@@ -218,7 +218,7 @@
         $.each( allowed_generators, function( key, value ) {
             mods += key + '|';
         });
-        get_namespaces('en.wikipedia.org'); // Will be done in the background
+        get_namespaces(mw.config.ADB['default-site']); // Will be done in the background
         var api = new mw.Api();
         api.get({
             action: 'paraminfo',
@@ -228,6 +228,57 @@
             });
         }
 
+    function require_pref( name, help, example ) {
+        if ( mw.config.ADB[name] === undefined ) {
+            var ans = window.prompt(help, example);
+            if ( ans === '' ) {
+                ans = example;
+            }
+            mw.config.ADB[name] = ans;
+            save_prefs();
+        }
+    }
+
+    function load_prefs( callback ) {
+        if ( mw.config.ADB !== undefined ) {
+            return;
+        }
+        var api = new mw.Api();
+        api.get({
+            action: 'query',
+            titles: 'User:' + mw.config.get('wgUserName') + '/ADB-prefs.js',
+            prop: 'revisions',
+            rvprop: 'content',
+            indexpageids: ''
+        }).done( function ( data ) {
+                var pageid = data.query.pageids[0];
+                if ( pageid === '-1' ) {
+                    mw.config.ADB = {};
+                } else {
+                    console.log(data);
+                    var content = data.query.pages[pageid].revisions[0]['*'];
+                    console.log(content);
+                    mw.config.ADB = JSON.parse(content);
+                }
+
+                callback();
+            });
+    }
+
+    function save_prefs() {
+        // Prefs stored in mw.config.ADB
+        if ( mw.config.ADB === undefined ) {
+            mw.config.ADB = {};
+        }
+        mw.config.ADB.version = '0.1';
+        var api = new mw.Api();
+        api.post({
+            action: 'edit',
+            title: 'User:' + mw.config.get('wgUserName') + '/ADB-prefs.js',
+            text: JSON.stringify(mw.config.ADB),
+            token: mw.user.tokens.get('editToken')
+        });
+    }
     function pick_a_generator() {
     // action=paraminfo&querymodules=backlinks|categorymembers&format=jsonfm
         console.log('start');
@@ -681,8 +732,11 @@
     });
 
     function init() {
+        load_prefs( function() {
+            require_pref('default-site', 'What Wikipedia (or Wikivoyage) should we pull data from?', 'en.wikipedia.org');
+            preload_generator();
+        });
         make_action_form();
-        preload_generator();
     }
 
     init();
