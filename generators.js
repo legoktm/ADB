@@ -279,6 +279,61 @@
             token: mw.user.tokens.get('editToken')
         });
     }
+
+    function make_generator_request( params, callback ) {
+        var url = location.protocol + '//' + mw.config.ADB['default-site'] + '/w/api.php?';
+        url += $.param(params);
+        url += '&callback=?';
+        $.getJSON(url, function ( data ) {
+            if ( data['query-continue'] !== undefined ) {
+                var newparams = $.extend({}, params, data['query-continue'][params.generator]);
+                make_generator_request( params, callback );
+            }
+            var arr = [];
+            $.each( data.query.pages, function ( pageid, value ) {
+                if ( value.pageprops !== undefined ) {
+                    if ( value.pageprops['wikibase_item'] !== undefined ) {
+                        arr.push( value.pageprops['wikibase_item'] );
+                    }
+                }
+            });
+            if ( arr.length != 0 ) {
+                populate_items( arr, callback );
+            }
+        });
+    }
+
+    function set_up_submit_handler() {
+        $('.gen-form').submit( function (e) {
+            e.preventDefault();
+            var realthis = this;
+            var list = $(realthis).find('[name=list]').val();
+            var params = {
+                action: 'query',
+                generator: list
+            };
+            $.each( mw.config.generators.paraminfo.querymodules, function( index, value ) {
+                if ( value.name !== list ) {
+                    return;
+                }
+                $.each( value.parameters, function( i, v ) {
+                    var vval = $(realthis).find('[name=' + v.name + ']').val();
+                    if ($.isArray( vval )) {
+                        var s = '';
+                        $.each( vval, function ( index, value ) {
+                            s +=  value + '|';
+                        } );
+                        s = s.slice(0, -1);
+                        params['g' + v.name] = s;
+                    } else if ( vval !== '' && vval !== undefined && vval !== null ) {
+                        params['g' + v.name] = vval;
+                    }
+                });
+            });
+            console.log(params);
+        });
+    }
+
     function pick_a_generator() {
     // action=paraminfo&querymodules=backlinks|categorymembers&format=jsonfm
         console.log('start');
@@ -307,7 +362,9 @@
             mw.loader.using( 'jquery.chosen', function () {
                 $('.chosen-select').chosen();
             });
+            set_up_submit_handler();
         });
+
 
         $.each( mw.config.generators.paraminfo.querymodules, function( index, value ) {
             var arr = [
@@ -457,22 +514,23 @@
         if ( inGroup( 'sysop' ) ) {
             options['remove-claims'] = 'Remove claims';
         }
-        var thingies = [
-            {
-                name: 'gogogo',
-                type: 'submit',
-                value: 'Start!'
-            },
+        return [
             {
                 name: 'action',
                 htmltype: 'select',
                 'data-placeholder': 'Select an action',
                 'class': 'chosen-select',
                 options: options,
-                style: 'width:350'
+                style: 'width:350',
+                help: 'Pick an action'
+            },
+            {
+                name: 'gogogo',
+                type: 'submit',
+                value: 'Start!'
             }
         ];
-        $('#start').append(make_form(thingies, 'id="action-form"'));
+        //$('#start').append(make_form(thingies, {id: 'action-form'}));
 
 
         // dunno why this doesnt work
