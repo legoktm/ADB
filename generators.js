@@ -316,8 +316,12 @@
                     type: 'hidden',
                     value: value.prefix
                 },
+                {
+                    name: 'list',
+                    type: 'hidden',
+                    value: value.name
+                }
             ];
-
             $.each( value.parameters, function( i, val ) {
                 if ( val.name === 'continue' || val.name === 'prop' ) {
                     return;
