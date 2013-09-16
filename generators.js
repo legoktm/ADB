@@ -329,7 +329,7 @@
                 var thingy = {
                     name: val.name,
                     placeholder: val.description,
-                    class: value.name + '-form gen-form'
+                    //class: value.name + '-form gen-form'
                 };
                 if ( val.type === 'string' ) {
                     thingy.style = 'width:70%';
@@ -359,7 +359,10 @@
                 }
                 arr.push(thingy);
             });
-            $('#generator').append(make_form( arr, 'id="' + value.name + '-form" class="gen-form"' ));
+            var div = $('<div></div>').attr('id', value.name + '-form').attr('class', 'gen-form');
+            arr = arr.concat(make_action_form2());
+            div.html(make_form( arr ));
+            $('#generator').append( div );
             $('#' + value.name + '-form').hide();
             mw.loader.using( 'jquery.chosen', function () {
                 $('.chosen-select').chosen();
