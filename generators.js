@@ -295,6 +295,7 @@
         });
     }
 
+    // TODO this should work if we use www.wikidata.org as our site
     function make_generator_request( params, callback ) {
         var url = location.protocol + '//' + mw.config.ADB['default-site'] + '/w/api.php?';
         url += $.param(params);
@@ -380,7 +381,6 @@
             set_up_submit_handler();
         });
 
-
         $.each( mw.config.generators.paraminfo.querymodules, function( index, value ) {
             var arr = [
                 {
@@ -392,6 +392,11 @@
                     name: 'list',
                     type: 'hidden',
                     value: value.name
+                },
+                {
+                    name: 'gogogo',
+                    type: 'submit',
+                    value: 'Start!'
                 }
             ];
             $.each( value.parameters, function( i, val ) {
@@ -435,13 +440,14 @@
                 arr.push(thingy);
             });
             var div = $('<div></div>').attr('id', value.name + '-form').attr('class', 'gen-form');
-            arr = arr.concat(make_action_form2());
+            //arr = arr.concat(make_action_form2());
             div.html(make_form( arr ));
             $('#generator').append( div );
             $('#' + value.name + '-form').hide();
             mw.loader.using( 'jquery.chosen', function () {
                 $('.chosen-select').chosen();
             });
+
             mw.loader.using('jquery.ui.autocomplete', function() {
                 $('.remote-autocomplete').autocomplete({
                     source: function( request, response ) {
@@ -450,9 +456,52 @@
                 });
             });
         });
+        var ffform = make_form(make_action_form2(), {id: 'thingy'}, true );
+        var seconddiv = $('<div></div>').attr('id', 'submit-button-div').append(ffform);
+        $.each( get_available_actions(), function( name, info ) {
+            seconddiv.append(info.form);
+        });
+        gen.append(seconddiv);
+        enable_wb_autocomplete();
+        $('.action-form').hide();
+        $('#action-chooser').on('change', function () {
+            $('.action-form').hide();
+            $('#' + $(this).val() + '-form').show();
+            mw.loader.using( 'jquery.chosen', function () {
+                $('.chosen-select').chosen();
+            });
+        });
+
+
+
     }
 
+    /**
+     * Action specification
+     * Each action should take a first parameter which is a generator
+     */
 
+    function get_available_actions() {
+        var actions = {};
+        actions['add-claims'] = {
+            name: 'add-claims',
+            form: add_claims(),
+            action: function ( vars ) { console.log(vars);}
+        };
+        actions['sleep'] = {
+            name: 'sleep',
+            form: '',
+            action: function ( vars ) { mw.notify('Sleeeep');}
+        };
+        if ( inGroup( 'sysop' ) ) {
+            actions['remove-claims'] = {
+                name: 'remove-claims',
+                form: remove_claims(),
+                action: function ( vars ) { console.log(vars);}
+            };
+        }
+        return actions;
+    }
 
     function add_claim( pid, dataValue, editSummary, entity ) {
         var api = new mw.Api();
@@ -547,13 +596,14 @@
                 'class': 'chosen-select',
                 options: options,
                 style: 'width:350',
-                help: 'Pick an action'
+                help: 'Pick an action',
+                id: 'action-chooser'
             },
-            {
+            /*{
                 name: 'gogogo',
                 type: 'submit',
                 value: 'Start!'
-            }
+            }*/
         ];
         //$('#start').append(make_form(thingies, {id: 'action-form'}));
 
@@ -600,11 +650,16 @@
     /**
      * Help make a html form
      */
-    function make_form( data, attrs ) {
+    function make_form( data, attrs, wrapindivinstead ) {
         if ( attrs === undefined ) {
             attrs = {};
         }
-        var $form = $('<form></form>').attr(attrs);
+        var $form;
+        if ( wrapindivinstead !== undefined ) {
+            $form = $('<div></div>').attr(attrs);
+        } else {
+            $form = $('<form></form>').attr(attrs);
+        }
         //$form.attr( data );
         $.each( data, function ( index, value ) {
             if ( value.id === undefined ) {
@@ -655,53 +710,7 @@
         return $form;
     }
 
-    function add_claims() {
-        var buttons = [
-            {
-                name: 'pid-value',
-                placeholder: 'P###',
-                class: 'property-autocomplete',
-                help: 'Property'
-            },
-            {
-                name: 'edit-summary',
-                maxlength: 240,
-                help: 'Edit summary'
-            },
-            {
-                name: 'qid-value',
-                placeholder: 'Value',
-                class: 'item-autocomplete',
-                help: 'Value'
-            },
-            {
-                name: 'gen-category',
-                placeholder: 'Category:Blah',
-                help: 'Category'
-            },
-            {
-                name: 'gen-site',
-                placeholder: 'en.wikipedia.org',
-                value: 'en.wikipedia.org',  // Mehhhhhhhhhhhhhh
-                help: 'Site'
-            },
-            {
-                name: 'ignore-list',
-                placeholder: 'Ignore prefix list',
-                help: 'Ignore prefixes'
-            },
-            {
-                name: 'action-do',
-                type: 'hidden',
-                value: 'add-claims'
-            },
-            {
-                name: 'submit',
-                type: 'submit',
-                value: 'Go!'
-            }
-        ];
-        $('#form2').append(make_form( buttons ));
+    function enable_wb_autocomplete() {
         mw.loader.using( 'jquery.ui.autocomplete', function () {
             $('.item-autocomplete').autocomplete({
                 source: function( request, response ) {
@@ -714,7 +723,40 @@
                 }
             });
         });
+    }
 
+    function add_claims() {
+        var buttons = [
+            {
+                name: 'pid-value',
+                placeholder: 'P###',
+                class: 'property-autocomplete',
+                help: 'Property'
+            },
+            {
+                name: 'edit-summary',
+                maxlength: 240,
+                help: 'Edit summary',
+                'class': 'restrict-length'
+            },
+            {
+                name: 'qid-value',
+                placeholder: 'Value',
+                class: 'item-autocomplete',
+                help: 'Value'
+            },
+            {
+                name: 'action-do',
+                type: 'hidden',
+                value: 'add-claims'
+            }
+        ];
+        var attrs = {
+            id: 'add-claims-form',
+            'class': 'action-form'
+        };
+        return make_form( buttons, attrs, true );
+        //$('#form2').append(make_form( buttons ));
     }
 
     function remove_claims() {
@@ -727,20 +769,21 @@
             {
                 name: 'edit-summary',
                 placeholder: 'Edit summary',
-                maxlength: 240
+                maxlength: 240,
+                'class': 'restrict-length'
             },
             {
                 name: 'action-do',
                 type: 'hidden',
                 value: 'remove-claims'
-            },
-            {
-                name: 'submit',
-                type: 'submit',
-                value: 'Go!'
             }
         ];
-        $('#form2').append(make_form( buttons ));
+        var attrs = {
+            id: 'remove-claims-form',
+            'class': 'action-form'
+        };
+        return make_form( buttons, attrs, true );
+        //$('#form2').append(make_form( buttons ));
     }
 
     function do_remove_claims() {
@@ -777,9 +820,6 @@
                 });
             });
         });
-
-
-
     }
 
     function inGroup( group ) {
@@ -812,7 +852,7 @@
                 remove_claims();
                 break;
             case 'add-claims':
-                add_claims();
+				$('#form2').append(add_claims());
                 break;
             case 'generator':
                 pick_a_generator();
