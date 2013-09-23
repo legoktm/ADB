@@ -450,7 +450,9 @@ function Queue(){
 					}
 				});
 			});
-			console.log(params);
+			make_generator_request(params, function(data){
+				enqueue(data);
+			});
 		});
 	}
 
