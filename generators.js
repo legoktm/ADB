@@ -400,6 +400,7 @@ function Queue(){
 
 	// TODO this should work if we use www.wikidata.org as our site
 	function make_generator_request( params, callback ) {
+		params.format = 'json';
 		var url = location.protocol + '//' + mw.config.ADB['default-site'] + '/w/api.php?';
 		url += $.param(params);
 		url += '&callback=?';
